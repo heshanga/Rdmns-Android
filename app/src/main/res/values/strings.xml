@@ -9,4 +9,6 @@
     <string name="no_app">No app found to open this link</string>
     <string name="downloading">Downloading…</string>
     <string name="location_denied">Location permission is needed to share GPS</string>
+    <string name="no_internet">No internet connection</string>
+    <string name="back_online">Back online</string>
 </resources>

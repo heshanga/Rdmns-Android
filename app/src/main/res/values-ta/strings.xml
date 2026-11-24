@@ -8,4 +8,6 @@
     <string name="no_app">இந்த இணைப்பைத் திறக்க செயலி இல்லை</string>
     <string name="downloading">பதிவிறக்குகிறது…</string>
     <string name="location_denied">GPS பகிர இருப்பிட அனுமதி தேவை</string>
+    <string name="no_internet">இணைய இணைப்பு இல்லை</string>
+    <string name="back_online">மீண்டும் இணைக்கப்பட்டது</string>
 </resources>

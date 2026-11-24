@@ -8,4 +8,6 @@
     <string name="no_app">මෙම සබැඳිය විවෘත කිරීමට යෙදුමක් නැත</string>
     <string name="downloading">බාගත වෙමින්…</string>
     <string name="location_denied">GPS බෙදාගැනීමට ස්ථාන අවසරය අවශ්‍යයි</string>
+    <string name="no_internet">අන්තර්ජාල සම්බන්ධතාවය නැත</string>
+    <string name="back_online">නැවත සම්බන්ධ විය</string>
 </resources>

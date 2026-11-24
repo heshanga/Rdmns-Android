@@ -8,16 +8,22 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Network
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.GeolocationPermissions
+import android.webkit.JavascriptInterface
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.URLUtil
 import android.webkit.ValueCallback
@@ -28,6 +34,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
@@ -36,6 +43,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -71,6 +80,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var container: FrameLayout
     private lateinit var progress: LinearProgressIndicator
     private lateinit var bottomNav: BottomNavigationView
+    private lateinit var bottomBar: View
+    private lateinit var netBanner: TextView
+
+    private val handler = Handler(Looper.getMainLooper())
+    private var navHidden = false
+    private var imeVisible = false
+    private var offline = false
 
     private var geoOrigin: String? = null
     private var geoCallback: GeolocationPermissions.Callback? = null
@@ -104,6 +120,10 @@ class MainActivity : AppCompatActivity() {
         container = findViewById(R.id.container)
         progress = findViewById(R.id.progress)
         bottomNav = findViewById(R.id.bottom_nav)
+        bottomBar = findViewById(R.id.bottom_bar)
+        netBanner = findViewById(R.id.net_banner)
+
+        hideStatusBar()
 
         // Keep the splash until the first page has painted (max 3 s).
         splash.setKeepOnScreenCondition { !firstPageDone }
@@ -143,13 +163,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        // Show the banner straight away if the app opens without a connection.
+        offline = !isOnline()
+        if (offline) showBanner(false) else hideBanner()
+
         val cb = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                // Connection is back: retry every tab that is showing the offline page.
-                runOnUiThread {
-                    webViews.forEachIndexed { i, w -> if (w?.url == OFFLINE) retry(i) }
-                }
-            }
+            override fun onAvailable(network: Network) = scheduleNetCheck(300)
+            override fun onLost(network: Network) = scheduleNetCheck(1200) // wait: Wi-Fi → data hand-over
+            override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) = scheduleNetCheck(300)
         }
         try {
             getSystemService(ConnectivityManager::class.java).registerDefaultNetworkCallback(cb)
@@ -163,6 +184,11 @@ class MainActivity : AppCompatActivity() {
             try { getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(it) } catch (_: Exception) { }
         }
         networkCallback = null
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) hideStatusBar()
     }
 
     override fun onResume() {
@@ -186,6 +212,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        handler.removeCallbacksAndMessages(null)
         webViews.forEach { w ->
             w?.let { (it.parent as? ViewGroup)?.removeView(it); it.destroy() }
         }
@@ -196,15 +223,136 @@ class MainActivity : AppCompatActivity() {
 
     private fun applyInsets() {
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
-            val imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+            // Status bar is hidden, so the page starts at the very top
+            // (only a camera notch, if any, keeps a small strip).
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val cut = insets.getInsets(WindowInsetsCompat.Type.displayCutout())
             val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
             // Hide the tab bar while typing so the page gets the full height.
-            bottomNav.isVisible = !imeVisible
-            findViewById<View>(R.id.divider).isVisible = !imeVisible
-            v.setPadding(bars.left, bars.top, bars.right, if (imeVisible) ime.bottom else 0)
+            bottomBar.isVisible = !imeVisible && !navHidden
+            val bottom = when {
+                imeVisible -> ime.bottom
+                navHidden -> bars.bottom // tab bar hidden: keep clear of the gesture bar
+                else -> 0                // the tab bar pads itself for the gesture bar
+            }
+            v.setPadding(maxOf(bars.left, cut.left), maxOf(bars.top, cut.top), maxOf(bars.right, cut.right), bottom)
             insets
         }
+    }
+
+    private fun hideStatusBar() {
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.statusBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+    }
+
+    // ---------------------------------------------------------------- auto-hiding tab bar
+
+    private fun showNav() {
+        if (!navHidden) return
+        navHidden = false
+        if (imeVisible) return
+        bottomBar.animate().cancel()
+        bottomBar.visibility = View.VISIBLE
+        bottomBar.translationY = bottomBar.height.toFloat()
+        bottomBar.animate().translationY(0f).setDuration(220).start()
+        ViewCompat.requestApplyInsets(root)
+    }
+
+    private fun hideNav() {
+        if (navHidden || imeVisible) return
+        navHidden = true
+        bottomBar.animate().cancel()
+        bottomBar.animate().translationY(bottomBar.height.toFloat()).setDuration(200).withEndAction {
+            if (navHidden) {
+                bottomBar.visibility = View.GONE
+                ViewCompat.requestApplyInsets(root)
+            }
+        }.start()
+    }
+
+    /** Receives scroll movement from the page (any scrolling element, not just the window). */
+    private inner class ScrollBridge(private val idx: Int) {
+        @JavascriptInterface
+        fun onScroll(dy: Int, y: Int) {
+            runOnUiThread {
+                if (idx != current) return@runOnUiThread
+                if (y < 24 || dy < 0) showNav() else hideNav()
+            }
+        }
+    }
+
+    private val scrollWatcher = """
+        (function(){
+          if (window.__rdmnsNav) return; window.__rdmnsNav = 1;
+          var last = new WeakMap(), acc = 0;
+          document.addEventListener('scroll', function(e){
+            var t = e.target;
+            var el = (t === document || t === document.documentElement || t === document.body)
+                     ? (document.scrollingElement || document.documentElement) : t;
+            if (!el || el.scrollHeight - el.clientHeight < 80) return; // ignore tiny scrollers
+            var y = el.scrollTop, p = last.has(el) ? last.get(el) : y;
+            last.set(el, y);
+            var dy = y - p;
+            if ((dy > 0) !== (acc > 0)) acc = 0;
+            acc += dy;
+            if (Math.abs(acc) > 12 || y < 24) { RDMNSNav.onScroll(Math.round(acc), Math.round(y)); acc = 0; }
+          }, {capture: true, passive: true});
+        })();
+    """.trimIndent()
+
+    // ---------------------------------------------------------------- network banner
+
+    private val netCheck = Runnable { setOffline(!isOnline()) }
+
+    private fun scheduleNetCheck(delay: Long) {
+        handler.removeCallbacks(netCheck)
+        handler.postDelayed(netCheck, delay)
+    }
+
+    private fun isOnline(): Boolean {
+        val cm = getSystemService(ConnectivityManager::class.java) ?: return true
+        val caps = cm.getNetworkCapabilities(cm.activeNetwork) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    private fun setOffline(now: Boolean) {
+        if (now == offline) return
+        offline = now
+        if (now) {
+            showBanner(false)
+            root.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        } else {
+            showBanner(true)
+            handler.postDelayed({ if (!offline) hideBanner() }, 2500)
+            // Connection is back: retry every tab that is showing the offline page.
+            webViews.forEachIndexed { i, w -> if (w?.url == OFFLINE) retry(i) }
+        }
+    }
+
+    private fun showBanner(online: Boolean) {
+        netBanner.setText(if (online) R.string.back_online else R.string.no_internet)
+        netBanner.setCompoundDrawablesRelativeWithIntrinsicBounds(
+            if (online) R.drawable.ic_check else R.drawable.ic_cloud_off, 0, 0, 0
+        )
+        netBanner.compoundDrawableTintList = ColorStateList.valueOf(Color.WHITE)
+        netBanner.backgroundTintList = ColorStateList.valueOf(Color.parseColor(if (online) "#1F8A43" else "#D93A3A"))
+        if (netBanner.visibility != View.VISIBLE) {
+            netBanner.animate().cancel()
+            netBanner.alpha = 0f
+            netBanner.translationY = -40f
+            netBanner.visibility = View.VISIBLE
+            netBanner.animate().alpha(1f).translationY(0f).setDuration(250).start()
+        }
+    }
+
+    private fun hideBanner() {
+        if (netBanner.visibility != View.VISIBLE) return
+        netBanner.animate().cancel()
+        netBanner.animate().alpha(0f).translationY(-40f).setDuration(200)
+            .withEndAction { netBanner.visibility = View.GONE }.start()
     }
 
     // ---------------------------------------------------------------- tabs
@@ -241,6 +389,7 @@ class MainActivity : AppCompatActivity() {
             if (j == i) { w.visibility = View.VISIBLE; w.onResume() } else { w.visibility = View.GONE; w.onPause() }
         }
         updateProgress(wv.progress)
+        showNav()
     }
 
     private fun restoreTabs(state: Bundle) {
@@ -337,6 +486,7 @@ class MainActivity : AppCompatActivity() {
         }
         CookieManager.getInstance().setAcceptThirdPartyCookies(wv, true)
 
+        wv.addJavascriptInterface(ScrollBridge(i), "RDMNSNav")
         wv.webViewClient = Client(i)
         wv.webChromeClient = Chrome(i)
         wv.setDownloadListener { url, ua, disposition, mime, _ -> download(url, ua, disposition, mime) }
@@ -350,6 +500,8 @@ class MainActivity : AppCompatActivity() {
 
         override fun onPageFinished(view: WebView, url: String?) {
             firstPageDone = true
+            if (url != null && url != OFFLINE) view.evaluateJavascript(scrollWatcher, null)
+            if (idx == current) showNav()
             if (url != null && url != OFFLINE && url != "about:blank") failedUrls[idx] = null
             CookieManager.getInstance().flush()
         }
