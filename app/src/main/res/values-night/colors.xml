@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#000000</color>
+    <color name="bar">#121214</color>
+    <color name="sep">#8C545458</color>
+    <color name="fg">#F5F5F7</color>
+    <color name="fg2">#8E8E96</color>
+    <color name="accent">#FF5A71</color>
+    <color name="ripple">#1FFF5A71</color>
+    <color name="brand">#9B1B31</color>
+</resources>

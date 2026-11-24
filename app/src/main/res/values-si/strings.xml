@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_home">මුල් පිටුව</string>
+    <string name="tab_map">සිතියම</string>
+    <string name="tab_radar">රේඩාර්</string>
+    <string name="tab_timetable">කාලසටහන</string>
+    <string name="press_back_again">පිටවීමට නැවත Back ඔබන්න</string>
+    <string name="no_app">මෙම සබැඳිය විවෘත කිරීමට යෙදුමක් නැත</string>
+    <string name="downloading">බාගත වෙමින්…</string>
+    <string name="location_denied">GPS බෙදාගැනීමට ස්ථාන අවසරය අවශ්‍යයි</string>
+</resources>

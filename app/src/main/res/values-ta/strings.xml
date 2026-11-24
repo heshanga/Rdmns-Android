@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_home">முகப்பு</string>
+    <string name="tab_map">வரைபடம்</string>
+    <string name="tab_radar">ரேடார்</string>
+    <string name="tab_timetable">அட்டவணை</string>
+    <string name="press_back_again">வெளியேற மீண்டும் Back அழுத்தவும்</string>
+    <string name="no_app">இந்த இணைப்பைத் திறக்க செயலி இல்லை</string>
+    <string name="downloading">பதிவிறக்குகிறது…</string>
+    <string name="location_denied">GPS பகிர இருப்பிட அனுமதி தேவை</string>
+</resources>

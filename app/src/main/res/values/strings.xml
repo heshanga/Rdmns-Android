@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RDMNS</string>
+    <string name="tab_home">Home</string>
+    <string name="tab_map">Map</string>
+    <string name="tab_radar">Radar</string>
+    <string name="tab_timetable">Timetable</string>
+    <string name="press_back_again">Press back again to exit</string>
+    <string name="no_app">No app found to open this link</string>
+    <string name="downloading">Downloading…</string>
+    <string name="location_denied">Location permission is needed to share GPS</string>
+</resources>

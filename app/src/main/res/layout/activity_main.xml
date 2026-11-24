@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@color/bg">
+
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:elevation="2dp"
+            android:indeterminate="false"
+            android:max="100"
+            android:visibility="invisible"
+            app:indicatorColor="@color/accent"
+            app:trackColor="@android:color/transparent"
+            app:trackThickness="2dp"
+            app:trackCornerRadius="1dp"
+            app:hideAnimationBehavior="none"
+            app:showAnimationBehavior="none" />
+    </FrameLayout>
+
+    <View
+        android:id="@+id/divider"
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:background="@color/sep" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/bar"
+        app:elevation="0dp"
+        app:menu="@menu/bottom_nav"
+        app:labelVisibilityMode="labeled"
+        app:itemIconSize="24dp"
+        app:itemIconTint="@color/nav_item"
+        app:itemTextColor="@color/nav_item"
+        app:itemRippleColor="@color/ripple"
+        app:itemActiveIndicatorStyle="@style/RDMNS.NoIndicator"
+        app:itemTextAppearanceActive="@style/RDMNS.NavLabel"
+        app:itemTextAppearanceInactive="@style/RDMNS.NavLabel" />
+</LinearLayout>

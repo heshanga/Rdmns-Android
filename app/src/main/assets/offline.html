@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RDMNS</title>
+<style>
+:root{--bg:#F2F2F7;--card:#FFFFFF;--fg:#0B0B0F;--fg2:#5D5D66;--accent:#9B1B31;--tint:rgba(155,27,49,.09);--on:#FFFFFF;
+--shadow:0 1px 2px rgba(17,17,26,.04),0 8px 24px rgba(17,17,26,.06);--ease:cubic-bezier(.32,.72,0,1)}
+@media (prefers-color-scheme:dark){:root{--bg:#000;--card:#1C1C1E;--fg:#F5F5F7;--fg2:#A3A3AB;--accent:#FF5A71;--tint:rgba(255,90,113,.15);--on:#1A0006;--shadow:0 0 0 .5px rgba(255,255,255,.06)}}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--bg);color:var(--fg);font-family:-apple-system,"Noto Sans Sinhala","Noto Sans Tamil",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{display:flex;align-items:center;justify-content:center;padding:24px}
+.card{width:100%;max-width:360px;background:var(--card);border-radius:24px;box-shadow:var(--shadow);padding:32px 22px 22px;text-align:center;animation:rise .5s var(--ease) both}
+.icon{width:64px;height:64px;border-radius:20px;background:var(--tint);display:grid;place-items:center;margin:0 auto 18px}
+.icon svg{width:32px;height:32px;fill:var(--accent)}
+h1{font-size:20px;font-weight:700;letter-spacing:-.01em;margin-bottom:8px}
+p{font-size:15px;line-height:1.45;color:var(--fg2);margin-bottom:24px}
+a.btn{display:flex;align-items:center;justify-content:center;height:52px;border-radius:16px;background:var(--accent);color:var(--on);font-size:17px;font-weight:600;text-decoration:none;transition:transform .18s}
+a.btn:active{transform:scale(.98)}
+.note{margin-top:14px;font-size:12px;color:var(--fg2);display:flex;align-items:center;justify-content:center;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--fg2);animation:pulse 1.6s ease-in-out infinite}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+@keyframes pulse{50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){.card,.dot{animation:none}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12,2c-4,0 -8,0.5 -8,4v9.5C4,17.43 5.57,19 7.5,19L6,20.5v0.5h2.23l2,-2H14l2,2h2v-0.5L16.5,19c1.93,0 3.5,-1.57 3.5,-3.5V6c0,-3.5 -3.58,-4 -8,-4zM7.5,17c-0.83,0 -1.5,-0.67 -1.5,-1.5S6.67,14 7.5,14s1.5,0.67 1.5,1.5S8.33,17 7.5,17zM11,10H6V6h5v4zM13,10V6h5v4h-5zM16.5,17c-0.83,0 -1.5,-0.67 -1.5,-1.5s0.67,-1.5 1.5,-1.5 1.5,0.67 1.5,1.5 -0.67,1.5 -1.5,1.5z"/></svg></div>
+  <h1 id="t">No connection</h1>
+  <p id="m">Check your mobile data or Wi-Fi and try again.</p>
+  <a class="btn" id="b" href="rdmns://retry">Try again</a>
+  <div class="note"><span class="dot"></span><span id="n">We'll reload automatically when you're back online</span></div>
+</div>
+<script>
+var L={
+ si:["සම්බන්ධතාවයක් නැත","ඔබගේ ජංගම දත්ත හෝ Wi-Fi පරීක්ෂා කර නැවත උත්සාහ කරන්න.","නැවත උත්සාහ කරන්න","සම්බන්ධ වූ විට ස්වයංක්‍රීයව නැවත පූරණය වේ"],
+ ta:["இணைப்பு இல்லை","உங்கள் மொபைல் டேட்டா அல்லது Wi-Fi ஐச் சரிபார்த்து மீண்டும் முயலவும்.","மீண்டும் முயல்க","இணைப்பு வந்ததும் தானாக மீண்டும் ஏற்றப்படும்"]
+};
+var lang=(navigator.language||"en").slice(0,2), s=L[lang];
+if(s){document.documentElement.lang=lang;["t","m","b","n"].forEach(function(id,i){document.getElementById(id).textContent=s[i];});}
+</script>
+</body>
+</html>
